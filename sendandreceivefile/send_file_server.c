@@ -12,6 +12,7 @@
 #include <string.h>
 
 #define SEND_PORT 9292
+#define LENGHT_OF_FILE_NAME 50
 
 // using will be ./send_file <file name>
 
@@ -26,7 +27,7 @@ int main(int argc, char** argv)
     int sf; //server sock
     int cs; //client sock
     int pid;
-    char filename[15];
+    char filename[LENGHT_OF_FILE_NAME];
     strcpy(filename, argv[1]);
     
     struct sockaddr_in serv_addr;
@@ -43,6 +44,9 @@ int main(int argc, char** argv)
         perror("creation of socket failed");
         exit(1);
     }
+
+    int opt;
+    setsockopt(sf, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     
     if(bind(sf, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
     {
