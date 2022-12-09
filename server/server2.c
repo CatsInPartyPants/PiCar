@@ -8,10 +8,13 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/sendfile.h>
 
 #include "blinker.h"
 #include "makephoto.h"
-#include "sendfile.h"
+
 
 #define PORT 9111
 
@@ -66,14 +69,14 @@ int main()
         close(fs);//close listen socket from parent process
         for(;;)
         {
-            char buff[3] = {0};
+            char buff[1] = {0};
             int count_of_bytes;
-            count_of_bytes = read(cs, &buff, 3);
+            count_of_bytes = read(cs, &buff, sizeof buff);
             printf("%d received.\n", count_of_bytes);
             if(count_of_bytes == 0)
                 break;
 
-            printf("%s\n", buff);
+            //printf("%c\n", buff[0]);
 
             if(0 == strcmp(buff, "q"))
                 break;
@@ -85,6 +88,7 @@ int main()
                 printf("Moving back\n");
             if(0 == strcmp(buff, "d"))
                 printf("Turnin right\n");
+            
             if(0 == strcmp(buff, "b") && is_lamp_on == 0)
             {
                pid = fork();
@@ -97,22 +101,39 @@ int main()
                //wait(NULL);
                //is_lamp_on = 0;
             }
+
             if(0 == strcmp(buff, "p"))
             {
                 pid = fork();
                 if(pid == 0)
                 {
-                    int send_sock = dup(cs);
+                    //make photo
                     make_single_photo();
-                    sleep(5);
-                    filesender("image.jpg", send_sock);
-                    close(send_sock); 
-                }
-                //wait(NULL);
-                sleep(10);
-                kill(pid, SIGKILL);
-                wait(NULL);
+                    sleep(6);
+                    //trying to send file
+                    int _size_of_file = 0;
+                    int in_fd = open("image.jpg", O_RDONLY);
+                    
+                    if(in_fd == -1)
+                    {
+                        perror("Cant open file for send");
+                    } 
 
+                    struct stat fileStatBuff;
+                    if(fstat(in_fd, &fileStatBuff) < 0)
+                    {
+                        perror("failed to get stats of file");
+                    }
+
+                    _size_of_file = fileStatBuff.st_size;
+                    sendfile(cs, in_fd, NULL, _size_of_file);
+                    
+                }
+                sleep(8);
+                kill(pid, SIGTERM);
+
+                printf("%d process killed, ready to get new info...\n", pid);
+                wait(NULL);
             }
         } 
         exit(0);
@@ -122,5 +143,4 @@ int main()
     close(cs); //close accepted socked from established connection
     wait(NULL);
     close(fs);
-
 }

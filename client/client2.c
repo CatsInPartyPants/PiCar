@@ -9,12 +9,14 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <ncurses.h>
+#include <fcntl.h>
 
 #include "functions.h"
-#include "receivefile.h"
+
 
 #define PHOTO_BUFFER 400000
 #define PORT 0
+#define BUFF_SIZE 4096
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +32,7 @@ int main(int argc, char *argv[])
     keypad(stdscr,1);
     noecho();
     curs_set(0);
+    int pid;
 
     int result;
     int cs; // cs - client socket
@@ -74,16 +77,10 @@ int main(int argc, char *argv[])
         exit(1);
     }
     printf("Connection established!\n");
+    
     help_message();
     
-    //for(;;)
-    {
-       //sending messages
-       char buff[3] = {0};
-      // scanf("%s", buff);
-      // write(cs, buff, sizeof(buff));
-       //if(0 == strcmp(buff, "exit"))
-        //   break;
+       char buff[1] = {0};
        while((key = getch()) != 'q')
        {
            switch(key)
@@ -119,23 +116,48 @@ int main(int argc, char *argv[])
                   write(cs,buff, sizeof(buff));
                   break;
               case 'p':
+                  {
                   buff[0] = 'p';
                   printw("PHOTO REQUEST\n");
-                  int pid;
+                  write(cs, buff, sizeof(buff));
+
+                  
+                  int new_file_fd;
+                  pid = getpid() ;
+                  printw("%d mypid\n", pid);
                   pid = fork();
                   if(pid == 0)
-                  {  
-                     write(cs, buff, sizeof(buff));
-                     /*get file and save it*/
-                     filereceiver("get_img.jpg", cs);
-                     printf("function filereceiver done!");
+                  {          
+                      unsigned char buffer[BUFF_SIZE];
+                      new_file_fd = open("new_image.jpg", O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                      if(new_file_fd < 0)
+                      {
+                          perror("Cant open file for receiving image");
+                          exit(1);
+                      }else
+                      {
+                          printf("opened the image with FD = %d\n", new_file_fd);
+                      } 
+                  
+                      int bytes;
+
+                      while((bytes = read(cs, buffer, BUFF_SIZE)) > 0)
+                      {
+                          printf("Get %d bytes\n", bytes);
+                          write(new_file_fd, buffer, bytes);
+                      }
+
+                      printf("Receiving is finished!\n");
                   }
-                  sleep(10);
-                  kill(pid, SIGKILL);
-                  wait(NULL);       
+                  sleep(8);
+                  printw("Killing the process hope all done)))0\n");
+                  kill(pid, SIGTERM);
+                  wait(NULL);
+                  close(new_file_fd);
+                  break;
+                  }                  
            }
        }      
-    }
     close(cs);
     endwin();
 }
