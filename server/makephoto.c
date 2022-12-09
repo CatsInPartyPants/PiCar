@@ -1,6 +1,6 @@
 #include <unistd.h>
 #include <sys/types.h>
-
+#include <wait.h>
 #include "makephoto.h"
 
 #define QUALITY "20"
@@ -18,4 +18,5 @@ void make_single_photo()
     {
         execlp("raspistill", "raspistill", "-rot", "180","-q", QUALITY, "-w", WIDTH, "-h", HEIGHT, "-o", filename, NULL);                
     }
+    wait(NULL);
 }

@@ -40,6 +40,10 @@ int main()
         perror("Creation of socket failed\n");
         exit(1);
     }
+    else
+    {
+        printf("[+]Creation of socket.\n");
+    }
 
     /*bind socket*/
     int opt = 1;
@@ -51,8 +55,14 @@ int main()
         perror("Socket bind failed\n");
         exit(1);
     }
+    else
+    {
+    
+       printf("[+]Socket bind succesfull.\n");
+    }
     
     /*listening...*/
+    printf("[+]Listening...\n");
     result = listen(fs, 5);   
 
    /*accept the connection*/ 
@@ -62,21 +72,29 @@ int main()
         perror("Accepting failed\n");
         exit(1);
     }
+    else
+    {
+       printf("[+]Accepting the connection succesfully.\n");
+    }
+    
+    
     /*making child process*/
+    
     pid = fork();
     if(pid == 0)
     {
         close(fs);//close listen socket from parent process
+        printf("[+] Child process working...\n");
         for(;;)
         {
-            char buff[1] = {0};
+            char buff[3] = {0};
             int count_of_bytes;
             count_of_bytes = read(cs, &buff, sizeof buff);
             printf("%d received.\n", count_of_bytes);
             if(count_of_bytes == 0)
                 break;
 
-            //printf("%c\n", buff[0]);
+            printf("%s\n", buff);
 
             if(0 == strcmp(buff, "q"))
                 break;
@@ -104,42 +122,47 @@ int main()
 
             if(0 == strcmp(buff, "p"))
             {
-                pid = fork();
-                if(pid == 0)
+                //make photo
+                printf("[+]I'm got the p letter!\n");
+                make_single_photo();
+                printf("[+]photo ready!\n");
+                sleep(3);
+                //trying to send file
+                
+                int _size_of_file = 0;
+                int in_fd = open("image.jpg", O_RDONLY);
+                int bytes_sended = 0;    
+                if(in_fd == -1)
                 {
-                    //make photo
-                    make_single_photo();
-                    sleep(6);
-                    //trying to send file
-                    int _size_of_file = 0;
-                    int in_fd = open("image.jpg", O_RDONLY);
-                    
-                    if(in_fd == -1)
-                    {
-                        perror("Cant open file for send");
-                    } 
-
-                    struct stat fileStatBuff;
-                    if(fstat(in_fd, &fileStatBuff) < 0)
-                    {
-                        perror("failed to get stats of file");
-                    }
-
-                    _size_of_file = fileStatBuff.st_size;
-                    sendfile(cs, in_fd, NULL, _size_of_file);
-                    
+                    perror("Cant open file for send");
+                    exit(1);
                 }
-                sleep(8);
-                kill(pid, SIGTERM);
+                else
+                {
+                    printf("[+]File for send opened.\n");
+                } 
 
-                printf("%d process killed, ready to get new info...\n", pid);
-                wait(NULL);
+                struct stat fileStatBuff;
+                if(fstat(in_fd, &fileStatBuff) < 0)
+                {
+                    perror("failed to get stats of file");
+                    exit(1);
+                }
+                else
+                {
+                    printf("[+]Got stats (size) of the file.\n");
+                }
+
+                _size_of_file = fileStatBuff.st_size;
+                printf("[+]Size of the file is %d\n", _size_of_file);
+                printf("[+]Sending.\n");
+                bytes_sended = sendfile(cs, in_fd, NULL, _size_of_file);
+                printf("[+] %d bytes sended succesfully.\n", bytes_sended);                    
             }
-        } 
-        exit(0);
+        }
     }
 
-    printf("got the connection!\n");
+    printf("got the connection! Parent...\n");
     close(cs); //close accepted socked from established connection
     wait(NULL);
     close(fs);

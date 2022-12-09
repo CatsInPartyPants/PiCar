@@ -14,7 +14,6 @@
 #include "functions.h"
 
 
-#define PHOTO_BUFFER 400000
 #define PORT 0
 #define BUFF_SIZE 4096
 
@@ -32,7 +31,6 @@ int main(int argc, char *argv[])
     keypad(stdscr,1);
     noecho();
     curs_set(0);
-    int pid;
 
     int result;
     int cs; // cs - client socket
@@ -80,7 +78,7 @@ int main(int argc, char *argv[])
     
     help_message();
     
-       char buff[1] = {0};
+       char buff[3] = {0};
        while((key = getch()) != 'q')
        {
            switch(key)
@@ -117,26 +115,24 @@ int main(int argc, char *argv[])
                   break;
               case 'p':
                   {
-                  buff[0] = 'p';
-                  printw("PHOTO REQUEST\n");
-                  write(cs, buff, sizeof(buff));
+                      int test;
+                      buff[0] = 'p';
+                      printw("PHOTO REQUEST\n");
+                      test = write(cs, buff, sizeof(buff));
+                      printw("%d bytes sended", test);
 
                   
-                  int new_file_fd;
-                  pid = getpid() ;
-                  printw("%d mypid\n", pid);
-                  pid = fork();
-                  if(pid == 0)
-                  {          
+                      int new_file_fd;
                       unsigned char buffer[BUFF_SIZE];
                       new_file_fd = open("new_image.jpg", O_WRONLY | O_CREAT | O_TRUNC, 0666);
-                      if(new_file_fd < 0)
-                      {
+                  
+                      if(new_file_fd < 0)                  
+                      {                      
                           perror("Cant open file for receiving image");
                           exit(1);
                       }else
                       {
-                          printf("opened the image with FD = %d\n", new_file_fd);
+                          printf("Opened the image with FD = %d\n", new_file_fd);
                       } 
                   
                       int bytes;
@@ -148,13 +144,8 @@ int main(int argc, char *argv[])
                       }
 
                       printf("Receiving is finished!\n");
-                  }
-                  sleep(8);
-                  printw("Killing the process hope all done)))0\n");
-                  kill(pid, SIGTERM);
-                  wait(NULL);
-                  close(new_file_fd);
-                  break;
+                      close(new_file_fd);
+                      break;
                   }                  
            }
        }      
