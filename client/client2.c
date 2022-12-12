@@ -141,6 +141,8 @@ int main(int argc, char *argv[])
                       {
                           printf("Get %d bytes\n", bytes);
                           write(new_file_fd, buffer, bytes);
+                          if(bytes < 4096)
+                              break;
                       }
 
                       printf("Receiving is finished!\n");
