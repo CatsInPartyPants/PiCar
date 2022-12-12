@@ -158,10 +158,6 @@ int main()
                 printf("[+]Sending.\n");
                 bytes_sended = sendfile(cs, in_fd, NULL, _size_of_file);
                 printf("[+]%d bytes sended succesfully.\n", bytes_sended);
-                printf("[+]Trying to send stop word...\n");
-                write(cs, "stop", 5);
-                printf("[+]Stop word sended...\n");
-                                
             }
         }
     }
