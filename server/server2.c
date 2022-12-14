@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/sendfile.h>
+#include <wiringPi.h>
 
 #include "blinker.h"
 #include "makephoto.h"
@@ -20,6 +21,7 @@
 
 int main()
 {
+    wiringPiSetup();
     int result, fs; //fs - listening socket
     int cs; // cs - client socket
     int pid;
@@ -99,13 +101,28 @@ int main()
             if(0 == strcmp(buff, "q"))
                 break;
             if(0 == strcmp(buff, "w"))
+            {
                 printf("Moving forward\n");
+                move(1);
+            }
+
             if(0 == strcmp(buff, "a"))
+            {
                 printf("Turning left\n");
+                move(3);
+            }
+
             if(0 == strcmp(buff, "s"))
+            {
                 printf("Moving back\n");
+                move(2);
+            }
+
             if(0 == strcmp(buff, "d"))
+            {
                 printf("Turnin right\n");
+                move(4);
+            }
             
             if(0 == strcmp(buff, "b") && is_lamp_on == 0)
             {
@@ -158,6 +175,8 @@ int main()
                 printf("[+]Sending.\n");
                 bytes_sended = sendfile(cs, in_fd, NULL, _size_of_file);
                 printf("[+]%d bytes sended succesfully.\n", bytes_sended);
+                close(in_fd);
+                printf("[+]File descriptor closed\n");
             }
         }
     }
