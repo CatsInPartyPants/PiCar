@@ -22,9 +22,15 @@
 int main()
 {
     wiringPiSetup();
+<<<<<<< HEAD
     int        result, fs; //fs - listening socket
     int        cs; // cs - client socket
     int        pid;
+=======
+    int result, fs; //fs - listening socket
+    int cs; // cs - client socket
+    int pid;
+>>>>>>> 7c247e244268cba531209d6e29b2dd664f32cbb4
     static int is_lamp_on = 0; 
     struct     sockaddr_in addr, client_addr;
     

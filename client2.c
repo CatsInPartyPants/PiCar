@@ -15,7 +15,7 @@
 
 
 #define PORT 0
-#define BUFF_SIZE 4096
+#define BUFF_SIZE 1448
 
 int main(int argc, char *argv[])
 {
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
                       {
                           printf("Get %d bytes\n", bytes);
                           write(new_file_fd, buffer, bytes);
-                          if(bytes < 4096)
+                          if(bytes < 1448)
                               break;
                       }
 
