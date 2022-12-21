@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/sendfile.h>
+#include <wiringPi.h>
 
 #include "blinker.h"
 #include "makephoto.h"
@@ -20,11 +21,13 @@
 
 int main()
 {
-    int result, fs; //fs - listening socket
-    int cs; // cs - client socket
-    int pid;
+    wiringPiSetup();
+    int        result, fs; //fs - listening socket
+    int        cs; // cs - client socket
+    int        pid;
     static int is_lamp_on = 0; 
-    struct sockaddr_in addr, client_addr;
+    struct     sockaddr_in addr, client_addr;
+    
     addr.sin_family = AF_INET;
     addr.sin_port = htons(PORT);
     //addr.sin_addr.s_addr = inet_addr("0.0.0.0");
@@ -97,27 +100,38 @@ int main()
             printf("%s\n", buff);
 
             if(0 == strcmp(buff, "q"))
+            {   
+                is_lamp_on = 1;
+                blinker(&is_lamp_on); 
                 break;
+            }
             if(0 == strcmp(buff, "w"))
-                printf("Moving forward\n");
-            if(0 == strcmp(buff, "a"))
-                printf("Turning left\n");
-            if(0 == strcmp(buff, "s"))
-                printf("Moving back\n");
-            if(0 == strcmp(buff, "d"))
-                printf("Turnin right\n");
-            
-            if(0 == strcmp(buff, "b") && is_lamp_on == 0)
             {
-               pid = fork();
-               if(pid == 0)
-               {
-                   is_lamp_on = 1;
-                   blinker();
-                   is_lamp_on = 0;
-               }
-               //wait(NULL);
-               //is_lamp_on = 0;
+                printf("Moving forward\n");
+                move(1);
+            }
+
+            if(0 == strcmp(buff, "a"))
+            {
+                printf("Turning left\n");
+                move(3);
+            }
+
+            if(0 == strcmp(buff, "s"))
+            {
+                printf("Moving back\n");
+                move(2);
+            }
+
+            if(0 == strcmp(buff, "d"))
+            {
+                printf("Turnin right\n");
+                move(4);
+            }
+            
+            if(0 == strcmp(buff, "b"))
+            {
+                blinker(&is_lamp_on);
             }
 
             if(0 == strcmp(buff, "p"))
@@ -158,6 +172,8 @@ int main()
                 printf("[+]Sending.\n");
                 bytes_sended = sendfile(cs, in_fd, NULL, _size_of_file);
                 printf("[+]%d bytes sended succesfully.\n", bytes_sended);
+                close(in_fd);
+                printf("[+]File descriptor closed\n");
             }
         }
     }
